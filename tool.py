@@ -1,6 +1,8 @@
 import random
+import os
+import sys
 
-ASCII_UPPER_RANGE=256
+ASCII_UPPER_RANGE=127
 BLOCK_SIZE = 8
 
 #Encrypt plain text block of size = BLOCK_SIZE
@@ -49,15 +51,15 @@ def decrypt_block(cipher_block, key_block):
 def convert_block(block):
 	result = []
 	for character in block:
-    	temp = ord(character)
-        result.append(temp)
-    return result
+		temp = ord(character)
+		result.append(temp)
+	return result
 
 def convert_to_ASCII(plaintext_list):
-    ASCII_list = []
-    for i,block in enumerate(plaintext_list):
-        ASCII_list.append(convert_block(block))
-    return ASCII_list
+	ASCII_list = []
+	for i,block in enumerate(plaintext_list):
+		ASCII_list.append(convert_block(block))
+	return ASCII_list
 
 
 
@@ -110,7 +112,7 @@ def Encrpyt_all_blocks(plaintext,key):
         cipher.append(cipher_block)
         temp = cipher_block
     EncrytedText = convert_all_blocks_to_chars(cipher)
-    IV_text = convert_to_chars(IV)
+    IV_text = ''.join(convert_to_chars(IV))
     return IV_text, EncrytedText
 
 #Complete CBC Encryption algorithm decryption
@@ -129,31 +131,54 @@ def Decrypt_all_blocks(ciphertext,key,IV):
 
 
 #------ MAIN FUNCTION ---------->
-print "<<------------------Encryption Decryption Tool------------------>>"
-print "<<-----------------------------v1.0----------------------------->>"
+print "<<------------------I Solemnly Swear I am up to no good------------------>>"
+print "<<----------------------------------v1.0--------------------------------->>"
 ch=0
 while True:
+	raw_input("Press Enter to continue...")
+	os.system("cls")
 	print "1. Encrypt\n2. Decrypt\n3.Exit\n"
 	ch = input("Enter choice : ")
 	if ch == 1:
 		message=raw_input("Enter message : ")
 		key = keyGenerator()
-		key_text = convert_to_chars(key)
+		key_text = ''.join(convert_to_chars(key))
 		print "Key = ", key_text		
 		IV_text, EncryptedText = Encrpyt_all_blocks(message,key)
-		f = open("EncryptionDetails.txt",'a')
+		f = open("EncryptionDetails.txt",'w')
 		f.write(key_text+"\n")
 		f.write(IV_text+"\n")
-		f.write(EncrytedText+"\n")
+		f.write(EncryptedText+"\n")
 		print "\nEncrypted Text = ",EncryptedText
+		f.close()
+		try:
+			f = open("EncryptionDetails.txt","r")
+		except IOError:
+			print "File doesn't exist!"
+			continue
+		os.system("EncryptionDetails.txt")
 		f.close()
 	elif ch==2:
 		message=raw_input("Enter message : ")
 		IV_text=raw_input("Enter IV : ")
 		key_text=raw_input("Enter key : ")
 		IV = list(IV_text)
-		IV = 
-
-print '-'*60
-DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV))
-print DecryptedText
+		IV = convert_block(IV)
+		key = list(key)
+		key = convert_block(key)
+		DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV))
+		print '-'*60
+		print "Decrypted text is ---> ",DecryptedText
+		f = open("DecryptedText.txt",'w')
+		f.write(DecryptedText)
+		f.close()
+		try:
+			f = open("DecryptedText.txt","r")
+		except IOError:
+			print "File doesn't exist!"
+			continue
+		os.system("DecryptedText.txt")
+		f.close()
+	else:
+		print "....... Mischief Managed......."
+		sys.exit()
