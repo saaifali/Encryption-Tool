@@ -46,14 +46,20 @@ def decrypt_block(cipher_block, key_block):
 
 
 #Convert the list of blocks of 8 characters to their equivalent integer form
+def convert_block(block):
+	result = []
+	for character in block:
+    	temp = ord(character)
+        result.append(temp)
+    return result
+
 def convert_to_ASCII(plaintext_list):
-        ASCII_list = []
-        for i,block in enumerate(plaintext_list):
-                ASCII_list.append([])
-                for character in block:
-                        temp = ord(character)
-                        ASCII_list[i].append(temp)
-        return ASCII_list
+    ASCII_list = []
+    for i,block in enumerate(plaintext_list):
+        ASCII_list.append(convert_block(block))
+    return ASCII_list
+
+
 
 #Converts a list of numbers to their corresponding characters. Has to be done individually for each block.
 def convert_to_chars(message):
@@ -83,14 +89,15 @@ def remove_nulls(decrypted):
         return decrypted[count:]
     else:
         return decrypted     
-    
+
+#XOR previous block in CBC algorithm    
 def XOR_previous_block(plaintext_block,IV):
     outputList=[]
     for (i,j) in zip(plaintext_block,IV):
         outputList.append(i^j)
     return outputList
 
-
+#Complete CBC Encryption algorithm encryption
 def Encrpyt_all_blocks(plaintext,key):
     plaintext_list = convert_to_block(plaintext)
     Bit_List = convert_to_ASCII(plaintext_list)
@@ -103,8 +110,10 @@ def Encrpyt_all_blocks(plaintext,key):
         cipher.append(cipher_block)
         temp = cipher_block
     EncrytedText = convert_all_blocks_to_chars(cipher)
-    return IV, EncrytedText
+    IV_text = convert_to_chars(IV)
+    return IV_text, EncrytedText
 
+#Complete CBC Encryption algorithm decryption
 def Decrypt_all_blocks(ciphertext,key,IV):
     ciphertext_list = convert_to_block(ciphertext)
     Bit_List = convert_to_ASCII(ciphertext_list)
@@ -119,11 +128,32 @@ def Decrypt_all_blocks(ciphertext,key,IV):
     return DecryptedText
 
 
-message=raw_input("Enter message : ")
-key = keyGenerator()
-print "Key = ", key
-IV, EncryptedText = Encrpyt_all_blocks(message,key)
-print "IV = ",IV,"\nEncrypted Text = ",EncryptedText
+#------ MAIN FUNCTION ---------->
+print "<<------------------Encryption Decryption Tool------------------>>"
+print "<<-----------------------------v1.0----------------------------->>"
+ch=0
+while True:
+	print "1. Encrypt\n2. Decrypt\n3.Exit\n"
+	ch = input("Enter choice : ")
+	if ch == 1:
+		message=raw_input("Enter message : ")
+		key = keyGenerator()
+		key_text = convert_to_chars(key)
+		print "Key = ", key_text		
+		IV_text, EncryptedText = Encrpyt_all_blocks(message,key)
+		f = open("EncryptionDetails.txt",'a')
+		f.write(key_text+"\n")
+		f.write(IV_text+"\n")
+		f.write(EncrytedText+"\n")
+		print "\nEncrypted Text = ",EncryptedText
+		f.close()
+	elif ch==2:
+		message=raw_input("Enter message : ")
+		IV_text=raw_input("Enter IV : ")
+		key_text=raw_input("Enter key : ")
+		IV = list(IV_text)
+		IV = 
+
 print '-'*60
 DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV))
 print DecryptedText
