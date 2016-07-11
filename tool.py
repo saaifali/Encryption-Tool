@@ -1,8 +1,10 @@
 import random
 import os
 import sys
+import pickle
 
 ASCII_UPPER_RANGE=127
+ASCII_LOWER_RANGE = 65
 BLOCK_SIZE = 8
 
 #Encrypt plain text block of size = BLOCK_SIZE
@@ -16,7 +18,7 @@ def encrypt_block(plaintextList,keyList):
 def keyGenerator():
     key=[]
     for i in range(0,BLOCK_SIZE):
-        key.append(random.randrange(0,ASCII_UPPER_RANGE))
+        key.append(random.randrange(ASCII_LOWER_RANGE,ASCII_UPPER_RANGE))
     return key
 
 #Sets length of plaintext to be divisible by BLOCK_SIZE
@@ -51,7 +53,7 @@ def decrypt_block(cipher_block, key_block):
 def convert_block(block):
 	result = []
 	for character in block:
-		temp = ord(character)
+		temp = ord(str(character))
 		result.append(temp)
 	return result
 
@@ -112,8 +114,7 @@ def Encrpyt_all_blocks(plaintext,key):
         cipher.append(cipher_block)
         temp = cipher_block
     EncrytedText = convert_all_blocks_to_chars(cipher)
-    IV_text = ''.join(convert_to_chars(IV))
-    return IV_text, EncrytedText
+    return IV, EncrytedText
 
 #Complete CBC Encryption algorithm decryption
 def Decrypt_all_blocks(ciphertext,key,IV):
@@ -142,31 +143,31 @@ while True:
 	if ch == 1:
 		message=raw_input("Enter message : ")
 		key = keyGenerator()
-		key_text = ''.join(convert_to_chars(key))
-		print "Key = ", key_text		
-		IV_text, EncryptedText = Encrpyt_all_blocks(message,key)
-		f = open("EncryptionDetails.txt",'w')
-		f.write(key_text+"\n")
-		f.write(IV_text+"\n")
-		f.write(EncryptedText+"\n")
+		print "Key = ", key		
+		IV, EncryptedText = Encrpyt_all_blocks(message,key)
+		f = open("cipher.txt",'w')
+		keyfile = open("EncryptionDetails.txt",'w')
+		pickle.dump(key,keyfile)
+		pickle.dump(IV,keyfile)
+		f.write(EncryptedText)
 		print "\nEncrypted Text = ",EncryptedText
 		f.close()
+		keyfile.close()
 		try:
-			f = open("EncryptionDetails.txt","r")
+			f = open("cipher.txt","r")
 		except IOError:
 			print "File doesn't exist!"
 			continue
-		os.system("EncryptionDetails.txt")
+		os.system("cipher.txt")
 		f.close()
 	elif ch==2:
+		print "Please keep file named EncryptionDetails.txt in root directory"
 		message=raw_input("Enter message : ")
-		IV_text=raw_input("Enter IV : ")
-		key_text=raw_input("Enter key : ")
-		IV = list(IV_text)
-		IV = convert_block(IV)
-		key = list(key)
-		key = convert_block(key)
-		DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV))
+		keyfile = open("EncryptionDetails.txt",'r')
+		key = pickle.load(keyfile)
+		IV = pickle.load(keyfile)
+		keyfile.close()
+		DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV)) # Fix the message range limits as the message cannot be copied in command line perfectly then. Have to replace EncryptedText with message.
 		print '-'*60
 		print "Decrypted text is ---> ",DecryptedText
 		f = open("DecryptedText.txt",'w')
