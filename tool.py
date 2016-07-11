@@ -149,7 +149,7 @@ while True:
 		keyfile = open("EncryptionDetails.txt",'w')
 		pickle.dump(key,keyfile)
 		pickle.dump(IV,keyfile)
-		f.write(EncryptedText)
+		pickle.dump(list(EncryptedText),f)
 		print "\nEncrypted Text = ",EncryptedText
 		f.close()
 		keyfile.close()
@@ -161,13 +161,16 @@ while True:
 		os.system("cipher.txt")
 		f.close()
 	elif ch==2:
-		print "Please keep file named EncryptionDetails.txt in root directory"
-		message=raw_input("Enter message : ")
+		print "Please keep file named EncryptionDetails.txt and cipher.txt in root directory"
+		f = open("cipher.txt",'r')
+		message = pickle.load(f)
+		message = ''.join(message)
+		print "Cipher = ",message
 		keyfile = open("EncryptionDetails.txt",'r')
 		key = pickle.load(keyfile)
 		IV = pickle.load(keyfile)
 		keyfile.close()
-		DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedText,key,IV)) # Fix the message range limits as the message cannot be copied in command line perfectly then. Have to replace EncryptedText with message.
+		DecryptedText = remove_nulls(Decrypt_all_blocks(message,key,IV)) # Fix the message range limits as the message cannot be copied in command line perfectly then. Have to replace EncryptedText with message.
 		print '-'*60
 		print "Decrypted text is ---> ",DecryptedText
 		f = open("DecryptedText.txt",'w')
