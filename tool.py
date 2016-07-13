@@ -150,8 +150,7 @@ while True:
 		pickle.dump(key,keyfile)
 		pickle.dump(IV,keyfile)
 		pickle.dump(list(EncryptedText),f)
-		print "\nEncrypted Text(File can be found in root directory as cipher.txt)= ",EncryptedText
-        print "Key File is in root directory as EncryptionDetails.txt!"
+		print "\nEncrypted Text = ",EncryptedText
 		f.close()
 		keyfile.close()
 	elif ch==2:
@@ -165,8 +164,7 @@ while True:
 			continue
 		message = pickle.load(f)
 		message = ''.join(message)
-		print "Cipher = ",message
-		keyfile = open("EncryptionDetails.txt",'r')
+		print "Cipher = ",message		
 		key = pickle.load(keyfile)
 		IV = pickle.load(keyfile)
 		keyfile.close()
