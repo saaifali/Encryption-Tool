@@ -152,28 +152,21 @@ while True:
 		pickle.dump(list(EncryptedText),f)
 		print "\nEncrypted Text(File can be found in root directory as cipher.txt)= ",EncryptedText
         print "Key File is in root directory as EncryptionDetails.txt!"
-		"""
-        f.close()
+		f.close()
 		keyfile.close()
-		try:
-			f = open("cipher.txt","r")
-		except IOError:
-			print "File doesn't exist!"
-			continue
-		os.system("cipher.txt")
-		f.close()"""
 	elif ch==2:
-		print "Please keep file named EncryptionDetails.txt and cipher.txt in root directory and then press enter to continue! :)"
-        raw_input("...")
-        try:
-		  f = open("cipher.txt",'r')
-		  keyfile = open("EncryptionDetails.txt",'r')
-        except IOError:
-            print "Either file is missing or incorrectly named.\nPlease check and try again!"
-            continue
-        message = pickle.load(f)
+		print "Please keep file named EncryptionDetails.txt and cipher.txt in root directory and press enter to continue..."
+		raw_input()
+		try:
+			f = open("cipher.txt",'r')
+			keyfile = open("EncryptionDetails.txt",'r')
+		except IOError:
+			print "File Error. Check and try again!"
+			continue
+		message = pickle.load(f)
 		message = ''.join(message)
 		print "Cipher = ",message
+		keyfile = open("EncryptionDetails.txt",'r')
 		key = pickle.load(keyfile)
 		IV = pickle.load(keyfile)
 		keyfile.close()
