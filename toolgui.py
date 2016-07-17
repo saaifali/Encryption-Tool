@@ -256,62 +256,71 @@ hello= Tk()
 def TextButton2(event,choice,entry1,status):
     
     if(choice==1):
-        fileName=entry1.get()
-        EncryptionFile=open(fileName,'r')
-        content=EncryptionFile.readline()
-        fileContent=''
-        while(content):
-            fileContent+=content
-            content=EncryptionFile.readline()
-        EncryptionFile.close()
-        
+		fileName=entry1.get()
+		EncryptionFile=open(fileName,'r')
+		fileContent=[]
+		while True:
+			content=EncryptionFile.readline()
+			if content=='':
+				break
+			fileContent.append(content)
+			
+		EncryptionFile.close()
+		fileContent = ''.join(fileContent)
 
-        
-        key = keyGenerator()
-        # msg=''
-        # msg=msg+"Key="+key+"\n"
-        IV, EncryptedText = Encrpyt_all_blocks(fileContent, key)
-        # msg=msg+"Encrypted Text = "+EncryptedText+"\n"
-        msg = EncryptedText
-        status.configure(text="Encryption complete.....")
-        print msg
-        EncryptionFile=open(fileName,'w')    
-        keyFile='-999999'.join(str(x) for x in key)
-        IVFile='-999999'.join(str(x) for x in IV)
-        
-        EncryptionFile.write(keyFile+"\n")
-        EncryptionFile.write(IVFile+"\n")
-        EncryptionFile.write(msg)
-        EncryptionFile.close()
+		key = keyGenerator()
+		# msg=''
+		# msg=msg+"Key="+key+"\n"
+		IV, EncryptedText = Encrpyt_all_blocks(fileContent, key)
+		# msg=msg+"Encrypted Text = "+EncryptedText+"\n"
+		msg = EncryptedText
+		status.configure(text="Encryption complete.....")
+		print msg
+		EncryptionFile=open(fileName,'w')    
+		#keyFile='-999999'.join(str(x) for x in key)
+		#IVFile='-999999'.join(str(x) for x in IV)
+		keyFile=''.join(convert_to_chars(key))
+		IVFile=''.join(convert_to_chars(IV))
+
+		EncryptionFile.write(keyFile)
+		EncryptionFile.write(IVFile)
+		EncryptionFile.write(msg)
+		EncryptionFile.close()
     
     else:
-        fileName=entry1.get()
-        DecryptionFile=open(fileName,'r')
-        keyFile=DecryptionFile.readline()
-        IVFile=DecryptionFile.readline()
-        key=keyFile.split('-999999')
-        IV=IVFile.split('-999999')
-        for i in range(0,8):
-            key[i]=int(key[i])
-            IV[i]=int(IV[i])
-        msg=''
-        for line in DecryptionFile:
-            msg+=line
-         # def DecryptTextButton(event):
-        #entry2.delete(0, 'end')
-        # text1.delete('1.0',END)
-        DecryptedText = remove_nulls(Decrypt_all_blocks(msg, key, IV))
-        # msg=''
-        # msg=msg+"Decrypted Text = "+DecryptedText
-        #msg = DecryptedText
-        #label2.configure(text="Decrypted Text")
-        #entry2.insert(0, msg)
-        status.configure(text="Decryption complete.....")
-        #print msg
-        DecryptionFile.close()
-        
-        DecryptionFile=open(fileName,'w')
-        DecryptionFile.write(DecryptedText)
+		fileName=entry1.get()
+		DecryptionFile=open(fileName,'r')
+		msg  = DecryptionFile.read()
+		#keyFile=DecryptionFile.readline()
+		#IVFile=DecryptionFile.readline()
+		keyFile=msg[0:BLOCK_SIZE]
+		IVFile=msg[BLOCK_SIZE:(BLOCK_SIZE+BLOCK_SIZE)]
+		msg = msg[(BLOCK_SIZE+BLOCK_SIZE):]
+		key = convert_block(list(keyFile))
+		IV = convert_block(list(IVFile))
+		#key=keyFile.split('-999999')
+		#IV=IVFile.split('-999999')
+		#for i in range(0,8):
+		 #   key[i]=int(key[i])
+		  #  IV[i]=int(IV[i])
+		#msg=''
+		#for line in DecryptionFile:
+			#msg+=line
+		 # def DecryptTextButton(event):
+		#entry2.delete(0, 'end')
+		# text1.delete('1.0',END)
+		DecryptedText = remove_nulls(Decrypt_all_blocks(msg, key, IV))
+		# msg=''
+		# msg=msg+"Decrypted Text = "+DecryptedText
+		#msg = DecryptedText
+		#label2.configure(text="Decrypted Text")
+		#entry2.insert(0, msg)
+		status.configure(text="Decryption complete.....")
+		#print msg
+		DecryptionFile.close()
+
+		DecryptionFile=open(fileName,'w')
+		DecryptionFile.write(DecryptedText)
 
 
 
