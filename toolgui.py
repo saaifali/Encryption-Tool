@@ -135,7 +135,10 @@ def Decrypt_all_blocks(ciphertext, key, IV):
 
 #File Encryption and Decryption using Pickle
 def Encrypt_File(filename):
-    EncryptionFile = open(filename, 'r')
+    try:
+        EncryptionFile = open(filename, 'r')
+    except IOError:
+        raise IOError
     fileContent = EncryptionFile.readlines()
     EncryptionFile.close()
 
@@ -161,7 +164,10 @@ def Encrypt_File(filename):
     return keyText
 
 def Decrypt_File(filename,keyFile=None):
-    DecryptionFile = open(filename, 'r')
+    try:
+        DecryptionFile = open(filename, 'r')
+    except IOError:
+        raise IOError
     keyFile = pickle.load(DecryptionFile)
     key = convert_block(keyFile)
     DecryptedText = []
@@ -180,8 +186,6 @@ def Decrypt_File(filename,keyFile=None):
     for line in DecryptedText:
         DecryptionFile.write((line+"\n"))
     DecryptionFile.close()
-
-
 
 
 #Instant Encrypt Decrypt
@@ -304,14 +308,22 @@ def TextButton2(event,choice,entry1,status):
 
     if(choice==1):
         fileName=entry1.get()
-        keyText = Encrypt_File(fileName)
+        try:
+            keyText = Encrypt_File(fileName)
+        except IOError:
+            status.configure(text="File Not Found.....")
+            return
         status.configure(text="Encryption complete.....")
 
     else:
         fileName=entry1.get()
         KeyText = None
         #Take the key input from a text box HERE and replace keyText with that value.
-        Decrypt_File(fileName,KeyText)
+        try:
+            Decrypt_File(fileName,KeyText)
+        except IOError:
+            status.configure(text="File Not Found.....")
+            return
         status.configure(text="Decryption complete.....")
 
 
@@ -359,66 +371,29 @@ def TextButton3(event, option, entry1, status):
     if option==1:
         path=entry1.get()
         originalDirectory=os.getcwd()
-        os.chdir(path)
+        try:
+            os.chdir(path)
+        except WindowsError:
+            status.configure(text="Path is invalid!")
+            return
         for fileName in os.listdir(os.getcwd()):
-            EncryptionFile = open(fileName, 'r')
-            content = EncryptionFile.readline()
-            fileContent = ''
-            while (content):
-                fileContent += content
-                content = EncryptionFile.readline()
-            EncryptionFile.close()
+            keyText = Encrypt_File(fileName)
 
-            key = keyGenerator()
-            # msg=''
-            # msg=msg+"Key="+key+"\n"
-            IV, EncryptedText = Encrpyt_all_blocks(fileContent, key)
-            # msg=msg+"Encrypted Text = "+EncryptedText+"\n"
-            msg = EncryptedText
-            status.configure(text="Encryption complete.....")
-            print msg
-            EncryptionFile = open(fileName, 'w')
-            keyFile = ','.join(str(x) for x in key)
-            IVFile = ','.join(str(x) for x in IV)
-
-            EncryptionFile.write(keyFile + "\n")
-            EncryptionFile.write(IVFile + "\n")
-            EncryptionFile.write(msg)
-            EncryptionFile.close()
-
-        os.chdir(originalDirectory)
+        status.configure(text="Folder Encryption complete.....")
 
     else:
         originalDirectory = os.getcwd()
         path=entry1.get()
-        os.chdir(path)
+        try:
+            os.chdir(path)
+        except WindowsError:
+            status.configure(text="Path is invalid!")
+            return
         for fileName in os.listdir(os.getcwd()):
-            DecryptionFile = open(fileName, 'r')
-            keyFile = DecryptionFile.readline()
-            IVFile = DecryptionFile.readline()
-            key = keyFile.split(',')
-            IV = IVFile.split(',')
-            for i in range(0, 8):
-                key[i] = int(key[i])
-                IV[i] = int(IV[i])
-            msg = ''
-            for line in DecryptionFile:
-                msg += line
-                # def DecryptTextButton(event):
-            # entry2.delete(0, 'end')
-            # text1.delete('1.0',END)
-            DecryptedText = remove_nulls(Decrypt_all_blocks(msg, key, IV))
-            # msg=''
-            # msg=msg+"Decrypted Text = "+DecryptedText
-            # msg = DecryptedText
-            # label2.configure(text="Decrypted Text")
-            # entry2.insert(0, msg)
-            status.configure(text="Decryption complete.....")
-            # print msg
-            DecryptionFile.close()
-
-            DecryptionFile = open(fileName, 'w')
-            DecryptionFile.write(DecryptedText)
+            KeyText = None
+            # Take the key input from a text box HERE and replace keyText with that value.
+            Decrypt_File(fileName, KeyText)
+        status.configure(text="Folder Decryption complete.....")
 
     os.chdir(originalDirectory)
 
