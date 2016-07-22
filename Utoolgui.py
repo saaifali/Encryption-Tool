@@ -140,50 +140,48 @@ def Encrypt_File(filename):
     EncryptionFile.close()
 
     key = keyGenerator()
+
     IV = []
     EncryptedText = []
-    for i in range(0,len(fileContent)):
+    Final = []
+    for i,line in enumerate(fileContent):
         IV.append(None)
         EncryptedText.append(None)
-    for i,line in enumerate(fileContent):
-        IV[i], EncryptedText[i] = Encrpyt_all_blocks(line, key)
+        IV[i], EncryptedText[i] = Encrpyt_all_blocks(line[:-1], key)
         tempiv = ''.join(convert_to_chars(IV[i]))
-        msg = tempiv+EncryptedText[i]+"\n"
-        EncryptedText[i]=msg
-
-    EncryptionFile = open(filename, 'w')
-
+        Final.append([tempiv,EncryptedText[i]])
     keyFile = ''.join(convert_to_chars(key))
-
-    EncryptionFile.writelines(keyFile)
-    for line in EncryptedText:
-        EncryptionFile.writelines(line)
+    keyText = keyFile
+    keyFile = list(keyFile)
+    EncryptionFile = open(filename, 'w')
+    pickle.dump(keyFile, EncryptionFile)
+    for line in Final:
+        pickle.dump(line,EncryptionFile)
     EncryptionFile.close()
+    return keyText
 
-def Decrypt_File(filename):
+def Decrypt_File(filename,keyFile=None):
     DecryptionFile = open(filename, 'r')
-    fileContent = []
-    while True:
-        line = DecryptionFile.readline()
-        if line == '':
-            break
-        fileContent.append(line)
-    keyFile = fileContent[0][0:-1]
-    key = convert_block(list(keyFile))
+    keyFile = pickle.load(DecryptionFile)
+    key = convert_block(keyFile)
     DecryptedText = []
-    for i in range(1,len(fileContent)):
-        msg = fileContent[i]
-        IVFile = msg[0:BLOCK_SIZE]
-        msg = msg[BLOCK_SIZE:]
+    while True:
+        try:
+            msg = pickle.load(DecryptionFile)
+        except EOFError:
+            break
+        IVFile = msg[0]
+        line = msg[1]
         IV = convert_block(list(IVFile))
-        DecryptedText.append(remove_nulls(Decrypt_all_blocks(msg, key, IV)))
+        DecryptedText.append(remove_nulls(Decrypt_all_blocks(line, key, IV)))
 
-    DecryptionFile.close()
 
     DecryptionFile = open(filename, 'w')
     for line in DecryptedText:
-        DecryptionFile.writelines((line+"\n"))
+        DecryptionFile.write((line+"\n"))
     DecryptionFile.close()
+
+
 
 
 #Instant Encrypt Decrypt
@@ -194,13 +192,13 @@ def func():
 def InitializeMenu(root):
     menu=Menu(root)
     root.config(menu=menu)
-
     subMenu=Menu(menu)
     menu.add_cascade(label="File",menu=subMenu)
     subMenu.add_command(label="New Project",command=func)
     subMenu.add_command(label="New ",command=func)
     subMenu.add_separator()
     subMenu.add_command(label="Exit",command=sys.exit)
+
 
 def TextButton(event, choice,entry1,entry2,label2,status):
     global key, IV, EncryptedText

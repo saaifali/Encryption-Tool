@@ -27,9 +27,9 @@ def keyGenerator():
 
 #Sets length of plaintext to be divisible by BLOCK_SIZE
 def set_length(plaintext):
-        while (len(plaintext)%BLOCK_SIZE)!=0:
-            plaintext = chr(0)+plaintext
-        return plaintext
+    while (len(plaintext)%BLOCK_SIZE)!=0:
+        plaintext = chr(0)+plaintext
+    return plaintext
 
 
 # Convert a string (plaintext) to a list each containing a list of 8 characters each. --> [[1,2,3,4,5,6,7,8],[...],[...],.....]
@@ -55,17 +55,17 @@ def decrypt_block(cipher_block, key_block):
 
 #Convert the list of blocks of 8 characters to their equivalent integer form
 def convert_block(block):
-	result = []
-	for character in block:
-		temp = ord(str(character))
-		result.append(temp)
-	return result
+    result = []
+    for character in block:
+        temp = ord(str(character))
+        result.append(temp)
+    return result
 
 def convert_to_ASCII(plaintext_list):
-	ASCII_list = []
-	for i,block in enumerate(plaintext_list):
-		ASCII_list.append(convert_block(block))
-	return ASCII_list
+    ASCII_list = []
+    for i,block in enumerate(plaintext_list):
+        ASCII_list.append(convert_block(block))
+    return ASCII_list
 
 
 # Converts a list of numbers to their corresponding characters. Has to be done individually for each block.
@@ -116,8 +116,8 @@ def Encrpyt_all_blocks(plaintext, key):
         cipher_block = encrypt_block(AfterXOR, key)
         cipher.append(cipher_block)
         temp = cipher_block
-    EncrytedText = convert_all_blocks_to_chars(cipher)
-    return IV, EncrytedText
+    EncryptedText = convert_all_blocks_to_chars(cipher)
+    return IV, EncryptedText
 
 
 def Decrypt_all_blocks(ciphertext, key, IV):
@@ -133,6 +133,54 @@ def Decrypt_all_blocks(ciphertext, key, IV):
     DecryptedText = convert_all_blocks_to_chars(plain)
     return DecryptedText
 
+#File Encryption and Decryption using Pickle
+def Encrypt_File(filename):
+    EncryptionFile = open(filename, 'r')
+    fileContent = EncryptionFile.readlines()
+    EncryptionFile.close()
+
+    key = keyGenerator()
+
+    IV = []
+    EncryptedText = []
+    Final = []
+    for i,line in enumerate(fileContent):
+        IV.append(None)
+        EncryptedText.append(None)
+        IV[i], EncryptedText[i] = Encrpyt_all_blocks(line[:-1], key)
+        tempiv = ''.join(convert_to_chars(IV[i]))
+        Final.append([tempiv,EncryptedText[i]])
+    keyFile = ''.join(convert_to_chars(key))
+    keyText = keyFile
+    keyFile = list(keyFile)
+    EncryptionFile = open(filename, 'w')
+    pickle.dump(keyFile, EncryptionFile)
+    for line in Final:
+        pickle.dump(line,EncryptionFile)
+    EncryptionFile.close()
+    return keyText
+
+def Decrypt_File(filename,keyFile=None):
+    DecryptionFile = open(filename, 'r')
+    keyFile = pickle.load(DecryptionFile)
+    key = convert_block(keyFile)
+    DecryptedText = []
+    while True:
+        try:
+            msg = pickle.load(DecryptionFile)
+        except EOFError:
+            break
+        IVFile = msg[0]
+        line = msg[1]
+        IV = convert_block(list(IVFile))
+        DecryptedText.append(remove_nulls(Decrypt_all_blocks(line, key, IV)))
+
+
+    DecryptionFile = open(filename, 'w')
+    for line in DecryptedText:
+        DecryptionFile.write((line+"\n"))
+    DecryptionFile.close()
+
 
 
 
@@ -140,61 +188,60 @@ def Decrypt_all_blocks(ciphertext, key, IV):
 
 def func():
     pass
-	
-def InitializeMenu(root):
-	menu=Menu(root)
-	root.config(menu=menu)
 
-	subMenu=Menu(menu)
-	menu.add_cascade(label="File",menu=subMenu)
-	subMenu.add_command(label="New Project",command=func)
-	subMenu.add_command(label="New ",command=func)
-	subMenu.add_separator()
-	subMenu.add_command(label="Exit",command=sys.exit)
+def InitializeMenu(root):
+    menu=Menu(root)
+    root.config(menu=menu)
+    subMenu=Menu(menu)
+    menu.add_cascade(label="File",menu=subMenu)
+    subMenu.add_command(label="New Project",command=func)
+    subMenu.add_command(label="New ",command=func)
+    subMenu.add_separator()
+    subMenu.add_command(label="Exit",command=sys.exit)
 
 def TextButton(event, choice,entry1,entry2,label2,status):
     global key, IV, EncryptedText
     if (choice == 1):
-		message = entry1.get()
-		key = keyGenerator()
-		# msg=''
-		# msg=msg+"Key="+key+"\n"
-		IV, EncryptedText = Encrpyt_all_blocks(message, key)
-		# msg=msg+"Encrypted Text = "+EncryptedText+"\n"
-		msg=''
-		keyString=''
-		for x in key:
-			keyString+=chr(x)
-		msg+=keyString
-		IVString=''
-		for x in IV:
-			IVString+=chr(x)
-		msg+=IVString
-		msg+=EncryptedText
-		label2.configure(text="Encrypted Text")
-		entry2.insert(0, msg)
-		status.configure(text="Encryption complete.....")
-		print msg
+        message = entry1.get()
+        key = keyGenerator()
+        # msg=''
+        # msg=msg+"Key="+key+"\n"
+        IV, EncryptedText = Encrpyt_all_blocks(message, key)
+        # msg=msg+"Encrypted Text = "+EncryptedText+"\n"
+        msg=''
+        keyString=''
+        for x in key:
+            keyString+=chr(x)
+        msg+=keyString
+        IVString=''
+        for x in IV:
+            IVString+=chr(x)
+        msg+=IVString
+        msg+=EncryptedText
+        label2.configure(text="Encrypted Text")
+        entry2.insert(0, msg)
+        status.configure(text="Encryption complete.....")
+        print msg
     else:
-		# def DecryptTextButton(event):
-		entry2.delete(0, 'end')
-		msg=entry1.get()
-		print msg
-		keyList=[]
-		for x in range(0,8):
-			keyList.append(ord(msg[x]))
-		print keyList
-		IVList=[]
-		for x in range(8,16):
-			IVList.append(ord(msg[x]))
-		print IVList
-		# text1.delete('1.0',END)
-		EncryptedTextActual = msg[16:]
-		DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedTextActual, keyList, IVList))
-		label2.configure(text="Decrypted Text")
-		entry2.insert(0, DecryptedText)
-		status.configure(text="Decryption complete.....")
-		print DecryptedText
+        # def DecryptTextButton(event):
+        entry2.delete(0, 'end')
+        msg=entry1.get()
+        print msg
+        keyList=[]
+        for x in range(0,8):
+            keyList.append(ord(msg[x]))
+        print keyList
+        IVList=[]
+        for x in range(8,16):
+            IVList.append(ord(msg[x]))
+        print IVList
+        # text1.delete('1.0',END)
+        EncryptedTextActual = msg[16:]
+        DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedTextActual, keyList, IVList))
+        label2.configure(text="Decrypted Text")
+        entry2.insert(0, DecryptedText)
+        status.configure(text="Decryption complete.....")
+        print DecryptedText
 
 
 def option1():
@@ -235,7 +282,7 @@ def option1():
     button2.bind("<Button-1>", lambda event: TextButton(event, 2,entry1,entry2,label2,status))
     button3 = Button(Frame3, text="Exit",command=root.destroy)
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    
+
 
     status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W)
     status.pack(side=BOTTOM,fill=X)
@@ -254,74 +301,18 @@ hello= Tk()
 
 
 def TextButton2(event,choice,entry1,status):
-    
+
     if(choice==1):
-		fileName=entry1.get()
-		EncryptionFile=open(fileName,'r')
-		fileContent=[]
-		while True:
-			content=EncryptionFile.readline()
-			if content=='':
-				break
-			fileContent.append(content)
-			
-		EncryptionFile.close()
-		fileContent = ''.join(fileContent)
+        fileName=entry1.get()
+        keyText = Encrypt_File(fileName)
+        status.configure(text="Encryption complete.....")
 
-		key = keyGenerator()
-		# msg=''
-		# msg=msg+"Key="+key+"\n"
-		IV, EncryptedText = Encrpyt_all_blocks(fileContent, key)
-		# msg=msg+"Encrypted Text = "+EncryptedText+"\n"
-		msg = EncryptedText
-		status.configure(text="Encryption complete.....")
-		print msg
-		EncryptionFile=open(fileName,'w')    
-		#keyFile='-999999'.join(str(x) for x in key)
-		#IVFile='-999999'.join(str(x) for x in IV)
-		keyFile=''.join(convert_to_chars(key))
-		IVFile=''.join(convert_to_chars(IV))
-
-		EncryptionFile.write(keyFile)
-		EncryptionFile.write(IVFile)
-		EncryptionFile.write(msg)
-		EncryptionFile.close()
-    
     else:
-		fileName=entry1.get()
-		DecryptionFile=open(fileName,'r')
-		msg  = DecryptionFile.read()
-		#keyFile=DecryptionFile.readline()
-		#IVFile=DecryptionFile.readline()
-		keyFile=msg[0:BLOCK_SIZE]
-		IVFile=msg[BLOCK_SIZE:(BLOCK_SIZE+BLOCK_SIZE)]
-		msg = msg[(BLOCK_SIZE+BLOCK_SIZE):]
-		key = convert_block(list(keyFile))
-		IV = convert_block(list(IVFile))
-		#key=keyFile.split('-999999')
-		#IV=IVFile.split('-999999')
-		#for i in range(0,8):
-		 #   key[i]=int(key[i])
-		  #  IV[i]=int(IV[i])
-		#msg=''
-		#for line in DecryptionFile:
-			#msg+=line
-		 # def DecryptTextButton(event):
-		#entry2.delete(0, 'end')
-		# text1.delete('1.0',END)
-		DecryptedText = remove_nulls(Decrypt_all_blocks(msg, key, IV))
-		# msg=''
-		# msg=msg+"Decrypted Text = "+DecryptedText
-		#msg = DecryptedText
-		#label2.configure(text="Decrypted Text")
-		#entry2.insert(0, msg)
-		status.configure(text="Decryption complete.....")
-		#print msg
-		DecryptionFile.close()
-
-		DecryptionFile=open(fileName,'w')
-		DecryptionFile.write(DecryptedText)
-
+        fileName=entry1.get()
+        KeyText = None
+        #Take the key input from a text box HERE and replace keyText with that value.
+        Decrypt_File(fileName,KeyText)
+        status.configure(text="Decryption complete.....")
 
 
 def option2():
@@ -356,7 +347,7 @@ def option2():
     button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,status))
     button3 = Button(Frame3, text="Exit",command=root.destroy)
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    
+
 
     status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W)
     status.pack(side=BOTTOM,fill=X)
@@ -436,7 +427,7 @@ def option3():
     root = Tk()
 
     InitializeMenu(root)
-	
+
     Frame1 = Frame(root)
     Frame1.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
 
