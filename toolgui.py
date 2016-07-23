@@ -105,7 +105,7 @@ def XOR_previous_block(plaintext_block, IV):
     return outputList
 
 
-def Encrpyt_all_blocks(plaintext, key):
+def Encrypt_all_blocks(plaintext, key):
     plaintext_list = convert_to_block(plaintext)
     Bit_List = convert_to_ASCII(plaintext_list)
     IV = keyGenerator()
@@ -139,52 +139,43 @@ def Encrypt_File(filename):
         EncryptionFile = open(filename, 'r')
     except IOError:
         raise IOError
-    fileContent = EncryptionFile.readlines()
+    fileContent = EncryptionFile.read()
     EncryptionFile.close()
 
     key = keyGenerator()
 
-    IV = []
-    EncryptedText = []
-    Final = []
-    for i,line in enumerate(fileContent):
-        IV.append(None)
-        EncryptedText.append(None)
-        IV[i], EncryptedText[i] = Encrpyt_all_blocks(line[:-1], key)
-        tempiv = ''.join(convert_to_chars(IV[i]))
-        Final.append([tempiv,EncryptedText[i]])
-    keyFile = ''.join(convert_to_chars(key))
-    keyText = keyFile
-    keyFile = list(keyFile)
-    EncryptionFile = open(filename, 'w')
-    pickle.dump(keyFile, EncryptionFile)
-    for line in Final:
-        pickle.dump(line,EncryptionFile)
-    EncryptionFile.close()
-    return keyText
+    IV, EncryptedText = Encrypt_all_blocks(fileContent,key)
+    tempiv = ''.join(convert_to_chars(IV))
+    Final = tempiv+EncryptedText
+    #for i,line in enumerate(fileContent):
+        #IV.append(None)
+       # EncryptedText.append(None)
+        #IV[i], EncryptedText[i] = Encrypt_all_blocks(line[:-1], key)
 
-def Decrypt_File(filename,keyFile=None):
+        #Final.append([tempiv,EncryptedText[i]])
+    keyFile = ''.join(convert_to_chars(key))
+    EncryptionFile = open(filename, 'w')
+    #pickle.dump(keyFile, EncryptionFile)
+    pickle.dump(Final,EncryptionFile)
+    EncryptionFile.close()
+    return keyFile
+
+def Decrypt_File(filename,keyFile):
     try:
         DecryptionFile = open(filename, 'r')
     except IOError:
         raise IOError
-    keyFile = pickle.load(DecryptionFile)
+    #keyFile = pickle.load(DecryptionFile)
     key = convert_block(keyFile)
-    DecryptedText = []
-    while True:
-        try:
-            msg = pickle.load(DecryptionFile)
-        except EOFError:
-            break
-        IVFile = msg[0]
-        line = msg[1]
-        IV = convert_block(list(IVFile))
-        DecryptedText.append(remove_nulls(Decrypt_all_blocks(line, key, IV)))
+    msg = pickle.load(DecryptionFile)
+    IVFile = msg[0:BLOCK_SIZE]
+    line = msg[BLOCK_SIZE:]
+    IV = convert_block(list(IVFile))
+    DecryptedText = remove_nulls(Decrypt_all_blocks(line, key, IV))
 
 
     DecryptionFile = open(filename, 'w')
-    for line in DecryptedText:
-        DecryptionFile.write((line+"\n"))
+    DecryptionFile.write((DecryptedText+"\n"))
     DecryptionFile.close()
 
 
@@ -203,20 +194,23 @@ def InitializeMenu(root):
     subMenu.add_separator()
     subMenu.add_command(label="Exit",command=sys.exit)
 
-def TextButton(event, choice,entry1,entry2,label2,status):
+def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
     global key, IV, EncryptedText
+    entry2.delete(0, 'end')
+    keyEntry.delete(0, 'end')
     if (choice == 1):
         message = entry1.get()
         key = keyGenerator()
         # msg=''
         # msg=msg+"Key="+key+"\n"
-        IV, EncryptedText = Encrpyt_all_blocks(message, key)
+        IV, EncryptedText = Encrypt_all_blocks(message, key)
         # msg=msg+"Encrypted Text = "+EncryptedText+"\n"
         msg=''
         keyString=''
         for x in key:
             keyString+=chr(x)
-        msg+=keyString
+        #msg+=keyString
+        keyEntry.insert(0,keyString)
         IVString=''
         for x in IV:
             IVString+=chr(x)
@@ -228,19 +222,19 @@ def TextButton(event, choice,entry1,entry2,label2,status):
         print msg
     else:
         # def DecryptTextButton(event):
-        entry2.delete(0, 'end')
         msg=entry1.get()
         print msg
+        keyString = keyEntry.get()
         keyList=[]
-        for x in range(0,8):
-            keyList.append(ord(msg[x]))
+        for x in range(0,BLOCK_SIZE):
+            keyList.append(ord(keyString[x]))
         print keyList
         IVList=[]
-        for x in range(8,16):
+        for x in range(0,BLOCK_SIZE):
             IVList.append(ord(msg[x]))
         print IVList
         # text1.delete('1.0',END)
-        EncryptedTextActual = msg[16:]
+        EncryptedTextActual = msg[BLOCK_SIZE:]
         DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedTextActual, keyList, IVList))
         label2.configure(text="Decrypted Text")
         entry2.insert(0, DecryptedText)
@@ -257,6 +251,9 @@ def option1():
     Frame1=Frame(root)
     Frame1.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
 
+    KeyFrame = Frame(root)
+    KeyFrame.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
+
     Frame2=Frame(root)
     Frame2.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
 
@@ -272,6 +269,12 @@ def option1():
     entry1 = Entry(Frame1)
     entry1.pack(side=RIGHT,fill=BOTH,expand=True)
 
+    keyLabel = Label(KeyFrame, text="Key")
+    keyLabel.pack(side=LEFT, fill=BOTH, expand=True)
+
+    keyEntry = Entry(KeyFrame)
+    keyEntry.pack(side=RIGHT, fill=BOTH, expand=True)
+
     label2 = Label(Frame2, text="Encrypted Text")
     label2.pack(side=LEFT,fill=BOTH,expand=True)
 
@@ -280,10 +283,10 @@ def option1():
 
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button1.bind("<Button-1>", lambda event: TextButton(event, 1,entry1,entry2,label2,status))
+    button1.bind("<Button-1>", lambda event: TextButton(event, 1,entry1,entry2,keyEntry,label2,status))
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button2.bind("<Button-1>", lambda event: TextButton(event, 2,entry1,entry2,label2,status))
+    button2.bind("<Button-1>", lambda event: TextButton(event, 2,entry1,entry2,keyEntry,label2,status))
     button3 = Button(Frame3, text="Exit",command=root.destroy)
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
 
@@ -291,33 +294,27 @@ def option1():
     status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W)
     status.pack(side=BOTTOM,fill=X)
 
-    '''
-    button1=Button(root,text="Encrypt",command="EncryptTextButton")
-    button1.pack(row=2,column=2)
-    button2=Button(root,text="Encrypt",command="EncryptTextButton")
-    button2.pack(row=2,column=2)
-    button3=Button(root,text="Encrypt",command="EncryptTextButton")
-    button3.pack(row=2,column=2)
-    '''
     root.mainloop
 
 hello= Tk()
 
 
-def TextButton2(event,choice,entry1,status):
+def TextButton2(event,choice,entry1,keyEntry, status):
 
     if(choice==1):
         fileName=entry1.get()
+        keyEntry.delete(0, 'end')
         try:
             keyText = Encrypt_File(fileName)
         except IOError:
             status.configure(text="File Not Found.....")
             return
+        keyEntry.insert(0,keyText)
         status.configure(text="Encryption complete.....")
 
     else:
         fileName=entry1.get()
-        KeyText = None
+        KeyText = keyEntry.get()
         #Take the key input from a text box HERE and replace keyText with that value.
         try:
             Decrypt_File(fileName,KeyText)
@@ -338,8 +335,17 @@ def option2():
     Frame2=Frame(root)
     Frame2.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
 
+    KeyFrame = Frame(root)
+    KeyFrame.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
+
     Frame3=Frame(root)
     Frame3.pack(fill=X,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
+
+    keyLabel = Label(KeyFrame, text="Key")
+    keyLabel.pack(side=LEFT, fill=BOTH, expand=True)
+
+    keyEntry = Entry(KeyFrame)
+    keyEntry.pack(side=RIGHT, fill=BOTH, expand=True)
 
     BottomFrame=Frame(root)
     BottomFrame.pack(fill=X,side=BOTTOM)
@@ -353,10 +359,10 @@ def option2():
 
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button1.bind("<Button-1>", lambda event: TextButton2(event, 1,entry1,status))
+    button1.bind("<Button-1>", lambda event: TextButton2(event, 1,entry1,keyEntry,status))
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,status))
+    button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,keyEntry,status))
     button3 = Button(Frame3, text="Exit",command=root.destroy)
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
 
@@ -366,10 +372,11 @@ def option2():
 
 
 
-def TextButton3(event, option, entry1, status):
+def TextButton3(event, option, entry1,keyEntry, status):
 
     if option==1:
         path=entry1.get()
+        keyEntry.delete(0, 'end')
         originalDirectory=os.getcwd()
         try:
             os.chdir(path)
@@ -378,7 +385,7 @@ def TextButton3(event, option, entry1, status):
             return
         for fileName in os.listdir(os.getcwd()):
             keyText = Encrypt_File(fileName)
-
+        keyEntry.insert(0,keyText)
         status.configure(text="Folder Encryption complete.....")
 
     else:
@@ -390,7 +397,7 @@ def TextButton3(event, option, entry1, status):
             status.configure(text="Path is invalid!")
             return
         for fileName in os.listdir(os.getcwd()):
-            KeyText = None
+            KeyText = keyEntry.get()
             # Take the key input from a text box HERE and replace keyText with that value.
             Decrypt_File(fileName, KeyText)
         status.configure(text="Folder Decryption complete.....")
@@ -409,6 +416,9 @@ def option3():
     Frame2 = Frame(root)
     Frame2.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
 
+    KeyFrame = Frame(root)
+    KeyFrame.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
+
     Frame3 = Frame(root)
     Frame3.pack(fill=X, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
 
@@ -421,12 +431,18 @@ def option3():
     entry1 = Entry(Frame1)
     entry1.pack(side=RIGHT, fill=BOTH, expand=True)
 
+    keyLabel = Label(KeyFrame, text="Key")
+    keyLabel.pack(side=LEFT, fill=BOTH, expand=True)
+
+    keyEntry = Entry(KeyFrame)
+    keyEntry.pack(side=RIGHT, fill=BOTH, expand=True)
+
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
-    button1.bind("<Button-1>", lambda event: TextButton3(event, 1, entry1, status))
+    button1.bind("<Button-1>", lambda event: TextButton3(event, 1, entry1,keyEntry, status))
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
-    button2.bind("<Button-1>", lambda event: TextButton3(event, 2, entry1, status))
+    button2.bind("<Button-1>", lambda event: TextButton3(event, 2, entry1,keyEntry, status))
     button3 = Button(Frame3, text="Exit", command=root.destroy)
     button3.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
 
