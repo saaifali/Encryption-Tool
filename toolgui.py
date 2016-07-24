@@ -196,10 +196,11 @@ def InitializeMenu(root):
 
 def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
     global key, IV, EncryptedText
-    entry2.delete(0, 'end')
-    keyEntry.delete(0, 'end')
+    entry2.delete(1.0, END)
+
     if (choice == 1):
-        message = entry1.get()
+        keyEntry.delete(0, 'end')
+        message = entry1.get(1.0,END)
         key = keyGenerator()
         # msg=''
         # msg=msg+"Key="+key+"\n"
@@ -217,12 +218,12 @@ def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
         msg+=IVString
         msg+=EncryptedText
         label2.configure(text="Encrypted Text")
-        entry2.insert(0, msg)
+        entry2.insert(1.0, msg)
         status.configure(text="Encryption complete.....")
         print msg
     else:
         # def DecryptTextButton(event):
-        msg=entry1.get()
+        msg=entry1.get("1.0",'end-1c')
         print msg
         keyString = keyEntry.get()
         keyList=[]
@@ -237,7 +238,7 @@ def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
         EncryptedTextActual = msg[BLOCK_SIZE:]
         DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedTextActual, keyList, IVList))
         label2.configure(text="Decrypted Text")
-        entry2.insert(0, DecryptedText)
+        entry2.insert(1.0, DecryptedText)
         status.configure(text="Decryption complete.....")
         print DecryptedText
 
@@ -245,58 +246,61 @@ def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
 def option1():
 
     root = Tk()
-
+    root.title("Message Encrypt/Decrypt")
+    root.rowconfigure(0,weight=1)
+    root.columnconfigure(0,weight=1)
     InitializeMenu(root)
-
     Frame1=Frame(root)
-    Frame1.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
-
+    Frame1.grid(row=0, rowspan=3, pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W)
+    Frame1.rowconfigure(0,weight=1)
+    Frame1.columnconfigure(0,weight=1)
+    Frame1.rowconfigure(2, weight=1)
+    Frame1.rowconfigure(3, weight=1)
+    Frame1.columnconfigure(1, weight=3)
+    """
     KeyFrame = Frame(root)
     KeyFrame.pack(fill=BOTH, expand=True, pady=10, ipadx=10, padx=10, ipady=5)
-
+    """
     Frame2=Frame(root)
-    Frame2.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
-
+    Frame2.grid(row=3, rowspan = 1, pady=10, ipadx=10, padx=10, ipady=5,sticky=N+E+S+W)
+    Frame2.rowconfigure(0,weight=1)
+    Frame2.columnconfigure(0,weight=1)
+    Frame2.columnconfigure(1, weight=1)
+    Frame2.columnconfigure(2, weight=1)
+    """
     Frame3=Frame(root)
-    Frame3.pack(fill=X,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
+    Frame3.pack(fill=BOTH,expand=True,pady=10,ipadx=10,padx=10,ipady=5)
 
     BottomFrame=Frame(root)
     BottomFrame.pack(fill=X,side=BOTTOM)
+    """
+    label1 = Label(Frame1, text="Enter the text")
+    label1.grid(row=0,column=0,pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W+W)
+    keyLabel = Label(Frame1, text="Key")
+    keyLabel.grid(row=2,column=0,pady=10,ipadx=10,padx=10,ipady=5)
+    keyEntry = Entry(Frame1)
+    keyEntry.grid(row=2,column=1,columnspan=5,pady=10,ipadx=10,padx=10,ipady=5)
+    label2 = Label(Frame1, text="Encrypted Text")
+    label2.grid(row=3,column=0,pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W+W)
+    entry1 = Text(Frame1,height= 5,width = 50)
+    entry1.grid(row=0,column=1,columnspan=5,pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W)
+    entry2 = Text(Frame1,height= 5,width = 50)
+    entry2.grid(row=3,column=1,columnspan=5,pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W)
 
-    label1 = Label(Frame1, text="Enter the text   ")
-    label1.pack(side=LEFT,fill=BOTH,expand=True)
-
-    entry1 = Entry(Frame1)
-    entry1.pack(side=RIGHT,fill=BOTH,expand=True)
-
-    keyLabel = Label(KeyFrame, text="Key")
-    keyLabel.pack(side=LEFT, fill=BOTH, expand=True)
-
-    keyEntry = Entry(KeyFrame)
-    keyEntry.pack(side=RIGHT, fill=BOTH, expand=True)
-
-    label2 = Label(Frame2, text="Encrypted Text")
-    label2.pack(side=LEFT,fill=BOTH,expand=True)
-
-    entry2 = Entry(Frame2)
-    entry2.pack(side=RIGHT,fill=BOTH,expand=True)
-
-    button1 = Button(Frame3, text="Encrypt")
-    button1.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
+    button1 = Button(Frame2, text="Encrypt")
+    button1.grid(row=0,column=0,rowspan = 2,padx=10,sticky=N+E+S+W)
     button1.bind("<Button-1>", lambda event: TextButton(event, 1,entry1,entry2,keyEntry,label2,status))
-    button2 = Button(Frame3, text="Decrypt")
-    button2.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
+    button2 = Button(Frame2, text="Decrypt")
+    button2.grid(row=0,column=1,rowspan = 2,padx=10,sticky=N+E+S+W)
     button2.bind("<Button-1>", lambda event: TextButton(event, 2,entry1,entry2,keyEntry,label2,status))
-    button3 = Button(Frame3, text="Exit",command=root.destroy)
-    button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
+    button3 = Button(Frame2, text="Exit",command=root.destroy)
+    button3.grid(row=0,column=2,rowspan = 2,padx=10,sticky=N+E+S+W)
 
 
-    status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W)
-    status.pack(side=BOTTOM,fill=X)
+    status=Label(root, text="Ready ......", bd=1, relief=SUNKEN, anchor=W, bg='light green', fg='black' )
+    status.grid(row=4,sticky=N+E+S+W)
 
     root.mainloop
-
-hello= Tk()
 
 
 def TextButton2(event,choice,entry1,keyEntry, status):
@@ -307,7 +311,7 @@ def TextButton2(event,choice,entry1,keyEntry, status):
         try:
             keyText = Encrypt_File(fileName)
         except IOError:
-            status.configure(text="File Not Found.....")
+            status.configure(text="File Not Found.....",bg='red')
             return
         keyEntry.insert(0,keyText)
         status.configure(text="Encryption complete.....")
@@ -319,14 +323,14 @@ def TextButton2(event,choice,entry1,keyEntry, status):
         try:
             Decrypt_File(fileName,KeyText)
         except IOError:
-            status.configure(text="File Not Found.....")
+            status.configure(text="File Not Found.....",bg='red')
             return
         status.configure(text="Decryption complete.....")
 
 
 def option2():
     root = Tk()
-
+    root.title("File Encrypt/Decrypt")
     InitializeMenu(root)
 
     Frame1=Frame(root)
@@ -367,7 +371,7 @@ def option2():
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
 
 
-    status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W)
+    status=Label(BottomFrame, text="Ready ......",bd=1,relief=SUNKEN,anchor=W,bg='light green')
     status.pack(side=BOTTOM,fill=X)
 
 
@@ -381,7 +385,7 @@ def TextButton3(event, option, entry1,keyEntry, status):
         try:
             os.chdir(path)
         except WindowsError:
-            status.configure(text="Path is invalid!")
+            status.configure(text="Path is invalid!",bg='red')
             return
         for fileName in os.listdir(os.getcwd()):
             keyText = Encrypt_File(fileName)
@@ -394,7 +398,7 @@ def TextButton3(event, option, entry1,keyEntry, status):
         try:
             os.chdir(path)
         except WindowsError:
-            status.configure(text="Path is invalid!")
+            status.configure(text="Path is invalid!",bg='red')
             return
         for fileName in os.listdir(os.getcwd()):
             KeyText = keyEntry.get()
@@ -407,7 +411,7 @@ def TextButton3(event, option, entry1,keyEntry, status):
 
 def option3():
     root = Tk()
-
+    root.title("Folder Encrypt/Decrypt")
     InitializeMenu(root)
 
     Frame1 = Frame(root)
@@ -446,7 +450,7 @@ def option3():
     button3 = Button(Frame3, text="Exit", command=root.destroy)
     button3.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
 
-    status = Label(BottomFrame, text="Ready ......", bd=1, relief=SUNKEN, anchor=W)
+    status = Label(BottomFrame, text="Ready ......", bd=1, relief=SUNKEN, anchor=W,bg = 'light green')
     status.pack(side=BOTTOM, fill=X)
 
 
@@ -455,34 +459,29 @@ def option3():
 
 ''' First Page'''
 
-def selection():
-    sel=var.get()
-    if(sel==1):
-        option1()
-    elif(sel==2):
-        option2()
-    else:
-        option3()
-
-
-
+hello= Tk()
+hello.title('CBC Encryption/Decryption Tool')
+#hello.overrideredirect(True)
+hello.geometry("400x200")
+hello.resizable(width=False,height=False)
+#hello.wm_attributes("-topmost", True)
+#hello.wm_attributes("-disabled", True)
+hello.wm_attributes("-transparentcolor", "white")
 helloLabel1=Label(hello,text = "Choose the feature you want to use")
 
-var=IntVar()
+helloButton1=Button(hello,text="Instant Encryption/Decryption",command = option1,bg='light green')
+helloButton1.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
 
-helloRadioButton1=Radiobutton(hello,text="Instant Encryption/Decryption",variable=var,value=1)
-helloRadioButton1.pack(side=TOP,padx=10,pady=10,anchor=W)
+helloButton2=Button(hello,text="File Encryption/Decryption",command = option2,bg='light green')
+helloButton2.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
 
-helloRadioButton2=Radiobutton(hello,text="File Encryption/Decryption",variable=var,value=2)
-helloRadioButton2.pack(side=TOP,padx=10,pady=10,anchor=W)
+helloButton3=Button(hello,text="Folder Encryption/Decryption",command = option3,bg='light green')
+helloButton3.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
 
-helloRadioButton3=Radiobutton(hello,text="Folder Encryption/Decryption",variable=var,value=3)
-helloRadioButton3.pack(side=TOP,padx=10,pady=10,anchor=W)
+#helloButton1=Button(hello,text="Next",command=selection)
+#helloButton1.pack(side=RIGHT,padx=10,pady=10)
 
-helloButton1=Button(hello,text="Next",command=selection)
-helloButton1.pack(side=RIGHT,padx=10,pady=10)
-
-helloButton2=Button(hello,text="Exit",command=hello.destroy)
-helloButton2.pack(side=LEFT,padx=10,pady=10)
+helloButton2=Button(hello,text="Exit",command=hello.destroy,bg='red')
+helloButton2.pack(side=BOTTOM,padx=10,pady=10,fill=X)
 
 hello.mainloop()
