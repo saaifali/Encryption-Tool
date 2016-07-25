@@ -3,18 +3,20 @@ import sys
 from Tkinter import *
 import os
 import pickle
+from tkFileDialog import askopenfilename
 
 ASCII_UPPER_RANGE=127
 ASCII_LOWER_RANGE = 65
 BLOCK_SIZE = 8
-global key, IV, EncryptedText
+global key, IV, EncryptedText,fileName
 
 
 # Encrypt plain text block of size = BLOCK_SIZE
 def encrypt_block(plaintextList, keyList):
     outputList = []
     for (i, j) in zip(plaintextList, keyList):
-        outputList.append(i ^ j)
+        r = i^j
+        outputList.append(r)
     return outputList
 
 
@@ -179,6 +181,7 @@ def Decrypt_File(filename,keyFile):
     DecryptionFile.close()
 
 
+
 #Instant Encrypt Decrypt
 
 def func():
@@ -219,7 +222,7 @@ def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
         msg+=EncryptedText
         label2.configure(text="Encrypted Text")
         entry2.insert(1.0, msg)
-        status.configure(text="Encryption complete.....")
+        status.configure(text="Encryption complete.....",bg='light green')
         print msg
     else:
         # def DecryptTextButton(event):
@@ -239,16 +242,19 @@ def TextButton(event, choice,entry1,entry2,keyEntry,label2,status):
         DecryptedText = remove_nulls(Decrypt_all_blocks(EncryptedTextActual, keyList, IVList))
         label2.configure(text="Decrypted Text")
         entry2.insert(1.0, DecryptedText)
-        status.configure(text="Decryption complete.....")
+        status.configure(text="Decryption complete.....",bg='light green')
         print DecryptedText
 
 
-def option1():
-
+def option1(hello):
+    hello.withdraw()
     root = Tk()
     root.title("Message Encrypt/Decrypt")
     root.rowconfigure(0,weight=1)
     root.columnconfigure(0,weight=1)
+    root.geometry("+250+250")
+    root.overrideredirect(True)
+
     InitializeMenu(root)
     Frame1=Frame(root)
     Frame1.grid(row=0, rowspan=3, pady=10,ipadx=10,padx=10,ipady=5,sticky=N+E+S+W)
@@ -293,7 +299,8 @@ def option1():
     button2 = Button(Frame2, text="Decrypt")
     button2.grid(row=0,column=1,rowspan = 2,padx=10,sticky=N+E+S+W)
     button2.bind("<Button-1>", lambda event: TextButton(event, 2,entry1,entry2,keyEntry,label2,status))
-    button3 = Button(Frame2, text="Exit",command=root.destroy)
+    button3 = Button(Frame2, text="Exit")
+    button3.bind("<Button-1>", lambda event: ExitScreen(root,hello))
     button3.grid(row=0,column=2,rowspan = 2,padx=10,sticky=N+E+S+W)
 
 
@@ -303,10 +310,11 @@ def option1():
     root.mainloop
 
 
-def TextButton2(event,choice,entry1,keyEntry, status):
+def TextButton2(event,choice,entry1,keyEntry, status,fileName):
 
+    #fileName =  entry1.get()
     if(choice==1):
-        fileName=entry1.get()
+
         keyEntry.delete(0, 'end')
         try:
             keyText = Encrypt_File(fileName)
@@ -314,10 +322,10 @@ def TextButton2(event,choice,entry1,keyEntry, status):
             status.configure(text="File Not Found.....",bg='red')
             return
         keyEntry.insert(0,keyText)
-        status.configure(text="Encryption complete.....")
+        status.configure(text="Encryption complete.....",bg='light green')
 
     else:
-        fileName=entry1.get()
+
         KeyText = keyEntry.get()
         #Take the key input from a text box HERE and replace keyText with that value.
         try:
@@ -325,12 +333,23 @@ def TextButton2(event,choice,entry1,keyEntry, status):
         except IOError:
             status.configure(text="File Not Found.....",bg='red')
             return
-        status.configure(text="Decryption complete.....")
+        status.configure(text="Decryption complete.....",bg='light green')
 
+def getFileName(root,entry1):
+    global fileName
+    root.withdraw()
+    fileName = askopenfilename(title ='Choose file to Encrypt')
+    entry1.insert(0,fileName)
+    root.deiconify()
 
-def option2():
+def option2(hello):
+    global fileName
+    hello.withdraw()
     root = Tk()
     root.title("File Encrypt/Decrypt")
+    root.geometry("+250+250")
+    root.overrideredirect(True)
+
     InitializeMenu(root)
 
     Frame1=Frame(root)
@@ -359,15 +378,17 @@ def option2():
 
     entry1 = Entry(Frame1)
     entry1.pack(side=RIGHT,fill=BOTH,expand=True)
-
-
+    bbutton = Button(Frame1, text="Browse")
+    bbutton.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
+    bbutton.bind("<Button-1>", lambda event: getFileName(root,entry1))
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button1.bind("<Button-1>", lambda event: TextButton2(event, 1,entry1,keyEntry,status))
+    button1.bind("<Button-1>", lambda event: TextButton2(event, 1,entry1,keyEntry,status,fileName))
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,keyEntry,status))
-    button3 = Button(Frame3, text="Exit",command=root.destroy)
+    button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,keyEntry,status,fileName))
+    button3 = Button(Frame3, text="Exit")
+    button3.bind("<Button-1>", lambda event: ExitScreen(root,hello))
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
 
 
@@ -390,7 +411,7 @@ def TextButton3(event, option, entry1,keyEntry, status):
         for fileName in os.listdir(os.getcwd()):
             keyText = Encrypt_File(fileName)
         keyEntry.insert(0,keyText)
-        status.configure(text="Folder Encryption complete.....")
+        status.configure(text="Folder Encryption complete.....",bg='light green')
 
     else:
         originalDirectory = os.getcwd()
@@ -404,14 +425,22 @@ def TextButton3(event, option, entry1,keyEntry, status):
             KeyText = keyEntry.get()
             # Take the key input from a text box HERE and replace keyText with that value.
             Decrypt_File(fileName, KeyText)
-        status.configure(text="Folder Decryption complete.....")
+        status.configure(text="Folder Decryption complete.....",bg='light green')
 
     os.chdir(originalDirectory)
 
 
-def option3():
+def ExitScreen(root, hello):
+    hello.deiconify()
+    root.destroy()
+
+def option3(hello):
+    hello.withdraw()
     root = Tk()
     root.title("Folder Encrypt/Decrypt")
+    root.geometry("+250+250")
+    root.overrideredirect(True)
+
     InitializeMenu(root)
 
     Frame1 = Frame(root)
@@ -447,12 +476,12 @@ def option3():
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
     button2.bind("<Button-1>", lambda event: TextButton3(event, 2, entry1,keyEntry, status))
-    button3 = Button(Frame3, text="Exit", command=root.destroy)
+    button3 = Button(Frame3, text="Exit")
+    button3.bind("<Button-1>", lambda event:ExitScreen(root,hello))
     button3.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
 
     status = Label(BottomFrame, text="Ready ......", bd=1, relief=SUNKEN, anchor=W,bg = 'light green')
     status.pack(side=BOTTOM, fill=X)
-
 
 
 
@@ -469,15 +498,17 @@ hello.resizable(width=False,height=False)
 hello.wm_attributes("-transparentcolor", "white")
 helloLabel1=Label(hello,text = "Choose the feature you want to use")
 
-helloButton1=Button(hello,text="Instant Encryption/Decryption",command = option1,bg='light green')
+helloButton1=Button(hello,text="Instant Encryption/Decryption",bg='light green')
 helloButton1.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
+helloButton1.bind("<Button-1>", lambda event: option1(hello))
 
-helloButton2=Button(hello,text="File Encryption/Decryption",command = option2,bg='light green')
+helloButton2=Button(hello,text="File Encryption/Decryption",bg='light green')
 helloButton2.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
+helloButton2.bind("<Button-1>", lambda event: option2(hello))
 
-helloButton3=Button(hello,text="Folder Encryption/Decryption",command = option3,bg='light green')
+helloButton3=Button(hello,text="Folder Encryption/Decryption",bg='light green')
 helloButton3.pack(side=TOP,padx=10,pady=10,anchor=W,fill=BOTH,expand=True)
-
+helloButton3.bind("<Button-1>", lambda event: option3(hello))
 #helloButton1=Button(hello,text="Next",command=selection)
 #helloButton1.pack(side=RIGHT,padx=10,pady=10)
 
