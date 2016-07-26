@@ -1,14 +1,15 @@
 import random
 import sys
+import tkMessageBox
 from Tkinter import *
 import os
 import pickle
-from tkFileDialog import askopenfilename
+from tkFileDialog import askopenfilename, askdirectory
 
 ASCII_UPPER_RANGE=127
 ASCII_LOWER_RANGE = 65
 BLOCK_SIZE = 8
-global key, IV, EncryptedText,fileName
+global key, IV, EncryptedText
 
 
 # Encrypt plain text block of size = BLOCK_SIZE
@@ -136,15 +137,18 @@ def Decrypt_all_blocks(ciphertext, key, IV):
     return DecryptedText
 
 #File Encryption and Decryption using Pickle
-def Encrypt_File(filename):
+def Encrypt_File(filename,keyText=None):
     try:
-        EncryptionFile = open(filename, 'r')
+        EncryptionFile = open(filename, 'rb')
     except IOError:
         raise IOError
     fileContent = EncryptionFile.read()
     EncryptionFile.close()
-
-    key = keyGenerator()
+    key = []
+    if keyText==None:
+        key = keyGenerator()
+    else:
+        key = convert_block(list(keyText))
 
     IV, EncryptedText = Encrypt_all_blocks(fileContent,key)
     tempiv = ''.join(convert_to_chars(IV))
@@ -176,7 +180,7 @@ def Decrypt_File(filename,keyFile):
     DecryptedText = remove_nulls(Decrypt_all_blocks(line, key, IV))
 
 
-    DecryptionFile = open(filename, 'w')
+    DecryptionFile = open(filename, 'wb')
     DecryptionFile.write((DecryptedText+"\n"))
     DecryptionFile.close()
 
@@ -187,6 +191,9 @@ def Decrypt_File(filename,keyFile):
 def func():
     pass
 
+def displayMessage():
+    tkMessageBox.showwarning("Application Warning!","Please quit using exit button. ")
+    
 def InitializeMenu(root):
     menu=Menu(root)
     root.config(menu=menu)
@@ -253,7 +260,8 @@ def option1(hello):
     root.rowconfigure(0,weight=1)
     root.columnconfigure(0,weight=1)
     root.geometry("+250+250")
-    root.overrideredirect(True)
+    root.protocol('WM_DELETE_WINDOW', displayMessage)
+    #root.overrideredirect(True)
 
     InitializeMenu(root)
     Frame1=Frame(root)
@@ -306,18 +314,14 @@ def option1(hello):
 
     status=Label(root, text="Ready ......", bd=1, relief=SUNKEN, anchor=W, bg='light green', fg='black' )
     status.grid(row=4,sticky=N+E+S+W)
-
     root.mainloop
 
-
-def TextButton2(event,choice,entry1,keyEntry, status,fileName):
-
-    #fileName =  entry1.get()
+def TextButton2(event,choice,entry1,keyEntry,status):
+    fileName =  entry1.get()
     if(choice==1):
-
         keyEntry.delete(0, 'end')
         try:
-            keyText = Encrypt_File(fileName)
+            keyText = Encrypt_File(fileName,status)
         except IOError:
             status.configure(text="File Not Found.....",bg='red')
             return
@@ -325,7 +329,7 @@ def TextButton2(event,choice,entry1,keyEntry, status,fileName):
         status.configure(text="Encryption complete.....",bg='light green')
 
     else:
-
+        #status.configure(text="Decrypting.....", bg='orange')
         KeyText = keyEntry.get()
         #Take the key input from a text box HERE and replace keyText with that value.
         try:
@@ -336,11 +340,19 @@ def TextButton2(event,choice,entry1,keyEntry, status,fileName):
         status.configure(text="Decryption complete.....",bg='light green')
 
 def getFileName(root,entry1):
-    global fileName
-    root.withdraw()
-    fileName = askopenfilename(title ='Choose file to Encrypt')
+    root.iconify()
+    fileName = askopenfilename(title ='Choose file to Encrypt/Decrypt',initialdir = 'C:')
     entry1.insert(0,fileName)
     root.deiconify()
+
+def ExecuteEncrypt(event,choice,entry1,keyEntry,status):
+    status.configure(text="Encrypting.....", bg='orange')
+    TextButton2(event,choice,entry1,keyEntry,status)
+
+def ExecuteDecrypt(event,choice,entry1,keyEntry,status):
+    status.configure(text="Decrypting.....", bg='orange')
+    TextButton2(event,choice,entry1,keyEntry,status)
+
 
 def option2(hello):
     global fileName
@@ -348,8 +360,8 @@ def option2(hello):
     root = Tk()
     root.title("File Encrypt/Decrypt")
     root.geometry("+250+250")
-    root.overrideredirect(True)
-
+    #root.overrideredirect(True)
+    root.protocol('WM_DELETE_WINDOW',displayMessage)
     InitializeMenu(root)
 
     Frame1=Frame(root)
@@ -383,10 +395,10 @@ def option2(hello):
     bbutton.bind("<Button-1>", lambda event: getFileName(root,entry1))
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button1.bind("<Button-1>", lambda event: TextButton2(event, 1,entry1,keyEntry,status,fileName))
+    button1.bind("<Button-1>", lambda event: ExecuteEncrypt(event, 1,entry1,keyEntry,status))
     button2 = Button(Frame3, text="Decrypt")
     button2.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
-    button2.bind("<Button-1>", lambda event: TextButton2(event, 2,entry1,keyEntry,status,fileName))
+    button2.bind("<Button-1>", lambda event: ExecuteDecrypt(event, 2,entry1,keyEntry,status))
     button3 = Button(Frame3, text="Exit")
     button3.bind("<Button-1>", lambda event: ExitScreen(root,hello))
     button3.pack(side=LEFT,fill=BOTH,expand=True,padx=10)
@@ -408,8 +420,11 @@ def TextButton3(event, option, entry1,keyEntry, status):
         except WindowsError:
             status.configure(text="Path is invalid!",bg='red')
             return
-        for fileName in os.listdir(os.getcwd()):
-            keyText = Encrypt_File(fileName)
+        keyText = ''.join(convert_to_chars(keyGenerator()))
+        DirectoryList = os.listdir(os.getcwd())
+        for i,fileName in enumerate(DirectoryList):
+            keyText = Encrypt_File(fileName,keyText)
+            status.configure(text="Encrypted %d out of %d files"%(i,len(DirectoryList)), bg='orange')
         keyEntry.insert(0,keyText)
         status.configure(text="Folder Encryption complete.....",bg='light green')
 
@@ -421,8 +436,10 @@ def TextButton3(event, option, entry1,keyEntry, status):
         except WindowsError:
             status.configure(text="Path is invalid!",bg='red')
             return
-        for fileName in os.listdir(os.getcwd()):
+        DirectoryList = os.listdir(os.getcwd())
+        for i,fileName in enumerate(DirectoryList):
             KeyText = keyEntry.get()
+            status.configure(text="Decrypted %d out of %d files" % (i, len(DirectoryList)), bg='orange')
             # Take the key input from a text box HERE and replace keyText with that value.
             Decrypt_File(fileName, KeyText)
         status.configure(text="Folder Decryption complete.....",bg='light green')
@@ -434,12 +451,19 @@ def ExitScreen(root, hello):
     hello.deiconify()
     root.destroy()
 
+def getDirectory(root,entry1):
+    root.iconify()
+    directory = askdirectory(title ='Choose folder to Encrypt/Decrypt',initialdir = 'C:')
+    entry1.insert(0,directory)
+    root.deiconify()
+
 def option3(hello):
     hello.withdraw()
     root = Tk()
     root.title("Folder Encrypt/Decrypt")
     root.geometry("+250+250")
-    root.overrideredirect(True)
+    root.protocol('WM_DELETE_WINDOW', displayMessage)
+    #root.overrideredirect(True)
 
     InitializeMenu(root)
 
@@ -469,6 +493,10 @@ def option3(hello):
 
     keyEntry = Entry(KeyFrame)
     keyEntry.pack(side=RIGHT, fill=BOTH, expand=True)
+
+    bbutton = Button(Frame1, text="Browse")
+    bbutton.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
+    bbutton.bind("<Button-1>", lambda event: getDirectory(root, entry1))
 
     button1 = Button(Frame3, text="Encrypt")
     button1.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
